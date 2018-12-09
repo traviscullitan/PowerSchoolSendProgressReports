@@ -1,0 +1,7 @@
+[DEFAULT]
+HOST = https://your.site.com
+USERNAME = username
+PASSWORD = password
+TIMEOUT = 30
+CHROME_DRIVER = C:/chromedriver_win32/chromedriver.exe
+INPUT_FILE = C:/parent_progress_list.txt
