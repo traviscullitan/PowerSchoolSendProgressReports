@@ -1,7 +1,7 @@
 # PowerSchoolSendProgressReports
-When finished, this program will manually send progress reports to parents based on a tab delimited list of parents and students
+This program will manually sends progress reports from PowerSchool to parents based on a tab delimited list of parents and students
 
-This program requires the Selenium module for Python:
+This program requires the Python 3 and the Selenium module:
 pip install selenium
 
 The WebDriver for Chrome is also required:
