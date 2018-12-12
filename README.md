@@ -10,6 +10,7 @@ https://sites.google.com/a/chromium.org/chromedriver/
 Rename the config.ini.example file to config.ini and put in your site's settings.
 
 The tab delimited input should have the column names in the first row and have the following columns:
+
 FIRSTNAME|LASTNAME|EMAIL|LAST_SENT_DATE|GUARDIANID|STUDENT_NAME
 ---|---|---|---|---|---
 Joe|Doe|joe@parent.com|2018-1-1|500000|Doe, Jimmy A
