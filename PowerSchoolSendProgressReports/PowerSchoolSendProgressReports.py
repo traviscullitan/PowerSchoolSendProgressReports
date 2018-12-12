@@ -9,18 +9,22 @@ from datetime import date
 from datetime import datetime
 from collections import defaultdict
 import csv
+import traceback
+import os
 
 class Parent():
 
-    def __init__(self,name=None,last_sent_date=None,guardian_id=None,student_name=None):
-        self.name = name
+    def __init__(self,first_name=None,last_name=None,last_sent_date=None,guardian_id=None,student_name=None):
+        self.first_name = first_name
+        self.last_name = last_name
         self.last_sent_date = last_sent_date
         self.guardian_id = guardian_id
         self.student_name = student_name
 
     def __repr__(self):
         return str(
-            "Name: " + self.name +
+            "First_name: " + self.first_name +
+            "Last_name: " + self.last_name +
             "\nlast_sent_date:" + self.last_sent_date +
             "\nguardian_id: " + self.guardian_id +
             "\nstudent_name: " + self.student_name
@@ -36,15 +40,17 @@ def main():
     parents = get_parents(config)
 
     for parent in parents:
-        print("Processing:",parent.name)
-        process_parent(driver,parent,config)
+        print("Processing:",parent.first_name+" "+parent.last_name)
+        try:
+            process_parent(driver,parent,config)
+        except:
+            traceback.print_exc()
+            driver.save_screenshot(str(date.today())+"-"+parent.first_name+" "+parent.last_name)
 
     close_selenium(driver)
 
     write_parent_output(config,parents)
 
-    for parent in parents:
-        print(repr(parent))
 
 def import_config():
     config = configparser.ConfigParser()
@@ -68,13 +74,15 @@ def login_to_powerschool(driver,config):
 def get_parents(config):
 
     parents = []
-    with open(config["INPUT_FILE"],'r') as f:
+    with open(config["INPUT_PATH"]+config["INPUT_FILENAME"],'r') as f:
         next(f) # skip headings
         reader=csv.reader(f,delimiter='\t')
-        for firstname,lastname,last_sent_date,guardianid,student_name,grade_level in reader:
-            p = Parent(firstname + " " + lastname, last_sent_date, guardianid, student_name)
+        for firstname,lastname,last_sent_date,guardianid,student_name in reader:
+            p = Parent(firstname,lastname, last_sent_date, guardianid, student_name)
             parents.append(p)
 
+    new_file_name = str(date.today()) + config["INPUT_FILENAME"]
+    os.replace(config["INPUT_PATH"]+config["INPUT_FILENAME"], config["INPUT_PATH"]+new_file_name)
     return parents
 
 def process_parent(driver,parent,config):
@@ -100,6 +108,7 @@ def process_parent(driver,parent,config):
     driver.get(config["HOST"] + "/admin")
 
 def send_parent_email_if_needed(driver,edit_box,parent,config):
+    time.sleep(3)
     list_items = edit_box.find_elements_by_tag_name("li")
     data_access = list_items[2]
     try:
@@ -109,7 +118,6 @@ def send_parent_email_if_needed(driver,edit_box,parent,config):
         driver.save_screenshot("screenshot1.png")
     finally:
         time.sleep(3)
-
 
     try:
         data_access.click()
@@ -122,22 +130,19 @@ def send_parent_email_if_needed(driver,edit_box,parent,config):
     email_frequency = create_email_frequencies()
     selected_email_frequency_element = driver.find_element_by_id("frequency-of-emails-input")
     selected_email_frequency_number = email_frequency[Select(selected_email_frequency_element).first_selected_option.text]
-    email_last_sent = datetime.strptime(parent.last_sent_date, '%m-%d-%Y')
+    email_last_sent = datetime.strptime(parent.last_sent_date, '%Y-%m-%d')
     days_since_email_last_sent = (datetime.now() - email_last_sent).days
     assignment_details = driver.find_element_by_id("assignment-details-input")
 
     if assignment_details.is_selected() and days_since_email_last_sent >= selected_email_frequency_number:
-        print("********\nWould have sent report for: " + repr(parent) +"*******\n")
-        """
-            send_now_check_box = driver.find_element_by_id("send-now-input")
-            send_now_check_box.click()
-            time.sleep(1)
-            submit_button = driver.find_element_by_id("demographics-panel-save-button")
-            submit_button.click()
-            wait_for_element_to_hide_by_id(driver,config["TIMEOUT"],"loading")
-        """
+        send_now_check_box = driver.find_element_by_id("send-now-input")
+        send_now_check_box.click()
+        time.sleep(1)
+        submit_button = driver.find_element_by_id("demographics-panel-save-button")
+        submit_button.click()
+        wait_for_element_to_hide_by_id(driver,config["TIMEOUT"],"loading")
         parent.last_sent_date = str(date.today())
-        #return
+        return
 
     close_button = edit_box.find_element_by_id("demographics-panel-cancel-button")
     close_button.click()
@@ -174,9 +179,13 @@ def wait_for_element_to_hide_by_id(driver,timeout,id):
     finally:
         time.sleep(1)
 
-def write_parent_output(config,parent_output):
-    #TODO
-    pass
+def write_parent_output(config,parents):
+    
+    with open(config["INPUT_PATH"]+config["INPUT_FILENAME"],'w') as f:
+        first_line = "FIRSTNAME\tLASTNAME\tLAST_SENT_DATE\tGUARDIANID\tSTUDENT_NAME\n"
+        f.write(first_line)
+        for parent in parents:
+            f.write(parent.first_name+"\t"+parent.last_name+"\t"+parent.last_sent_date+"\t"+parent.guardian_id+"\t"+parent.student_name+"\n")
 
 def close_selenium(driver):
     time.sleep(5) # Let the user actually see something!
