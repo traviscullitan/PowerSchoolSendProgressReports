@@ -13,6 +13,6 @@ The tab delimited input should have the column names in the first row and have t
 
 FIRSTNAME|LASTNAME|EMAIL|LAST_SENT_DATE|GUARDIANID|STUDENT_NAME
 ---|---|---|---|---|---
-Joe|Doe|joe@parent.com|2018-1-1|500000|Doe, Jimmy A
-Jane|Doe|jane@parent.com|2018-12-1|500001|Doe, Sarah L
+Joe|Doe|joe@parent.com|2018-1-1|500000|Doe, Jimmy Allan
+Jane|Doe|jane@parent.com|2018-12-1|500001|Doe, Sarah Lynn
 
