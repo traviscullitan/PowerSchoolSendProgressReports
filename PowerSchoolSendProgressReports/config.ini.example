@@ -4,5 +4,5 @@ USERNAME = username
 PASSWORD = password
 TIMEOUT = 30
 CHROME_DRIVER = C:/chromedriver_win32/chromedriver.exe
-INPUT_PATH = C:/
+INPUT_PATH = C:/Folder/
 INPUT_FILENAME = parent_progress_list.txt

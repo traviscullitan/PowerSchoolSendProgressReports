@@ -37,15 +37,22 @@ def main():
 
     login_to_powerschool(driver,config)
 
-    parents = get_parents(config)
+    try:
+        parents = get_parents(config)
+    except:
+        print("Unable to Open Parent List")
+        traceback.print_exc()
+        close_selenium(driver)
+        return
 
     for parent in parents:
-        print("Processing:",parent.first_name+" "+parent.last_name)
+        print("Processing:",parent.first_name+" "+parent.last_name,"-",parent.student_name)
         try:
             process_parent(driver,parent,config)
         except:
             traceback.print_exc()
-            driver.save_screenshot(str(date.today())+"-"+parent.first_name+" "+parent.last_name)
+            filename = str(date.today())+"-"+parent.first_name+" "+parent.last_name+".png"
+            driver.save_screenshot(filename)
 
     close_selenium(driver)
 
@@ -77,15 +84,21 @@ def get_parents(config):
     with open(config["INPUT_PATH"]+config["INPUT_FILENAME"],'r') as f:
         next(f) # skip headings
         reader=csv.reader(f,delimiter='\t')
+        row = 1
         for firstname,lastname,last_sent_date,guardianid,student_name in reader:
             p = Parent(firstname,lastname, last_sent_date, guardianid, student_name)
-            parents.append(p)
+            if p.guardian_id and p.last_sent_date and p.student_name:
+                parents.append(p)
+            else:
+                print("WARNING: Record on row {} missing data.".format(row))
+            row += 1 
 
     new_file_name = str(date.today()) + config["INPUT_FILENAME"]
     os.replace(config["INPUT_PATH"]+config["INPUT_FILENAME"], config["INPUT_PATH"]+new_file_name)
     return parents
 
 def process_parent(driver,parent,config):
+    driver.get(config["HOST"] + "/admin")
     driver.get(config["HOST"] + "/admin/contacts/edit.html#?guardianid=" + parent.guardian_id)
     time.sleep(5)
     relationship_table = wait_for_element_load_by_id(driver,config["TIMEOUT"],"relationship-table")
@@ -102,7 +115,6 @@ def process_parent(driver,parent,config):
                 buttons[0].click()
                 edit_box = driver.find_element_by_id("psDialogDocked")
                 send_parent_email_if_needed(driver,edit_box,parent,config)
-                driver.get(config["HOST"] + "/admin")
                 return
 
     driver.get(config["HOST"] + "/admin")
